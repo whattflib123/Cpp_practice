@@ -13,6 +13,7 @@ class RequestTracker{
         ~RequestTracker(){
             if (counter != nullptr){
                 std::cout << "Request finished, total logs = "<< *counter << std::endl;
+                delete counter;
             }
             
         }
