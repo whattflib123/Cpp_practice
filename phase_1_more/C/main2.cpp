@@ -7,10 +7,10 @@ class Logger{
     public:
         Logger(){
             log_count = 0;
-            std:cout << "=== log start ===" << std::endl;
+            std::cout << "=== log start ===" << std::endl;
         }
         ~Logger(){
-            std:cout << "=== log end, total:"  << log_count << " ===" << std::endl; 
+            std::cout << "=== log end, total:"  << log_count << " ===" << std::endl; 
         }
         void log(){
             log_count = log_count + 1;
