@@ -1,4 +1,4 @@
-# Cpp第六章 STL Algorithms + Lambda
+# C++第六章 STL Algorithms + Lambda
 > 方便用的工具
 ## 1. Lambda: 
 > 不需要正式定義的函式
