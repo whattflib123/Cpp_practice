@@ -19,7 +19,7 @@ std::vector<Detection> filter(const std::vector<Detection>& v, float thr);
 // ===============================================================
 
 int count_above(const std::vector<Detection>& v, float thr){
-    int n;
+    int n = 0;
     for(const auto& d : v){
         if(d.score > thr){
             n = n + 1;
@@ -38,9 +38,14 @@ std::vector<Detection> filter(const std::vector<Detection>& v, float thr){
     return filtered;  
 };
 
+void print(const Detection& d){
+    std::cout << std::fixed << std::setprecision(2) << d.score << std::endl;
+}
+
 
 int main(){
 
+    int num = 0;
     
     std::vector<Detection> v = {
         {0, 0.42f, 0.01f, 0.01f, 0.01f, 0.01f},
@@ -80,10 +85,6 @@ int main(){
 
     */
 
-    // 驗證:
-    for (auto d : v)  { d.score = 999.0f; }
-    std::cout << v[0].score << '\n';          // 印出什麼? 因為不是改本體 所以會印出改之前的值
-
 
     std::cout << '\n';
     std::cout << &v[0] << '\n';
@@ -118,12 +119,17 @@ int main(){
        const auto& d // d 是 const Detection& —— 綁定,唯讀
     */
 
-    // 驗證: 
-    for (auto& d : v) { d.score = 999.0f; }   // 改本體
-    std::cout << v[0].score << '\n';          // 又印出什麼? 印出改後的值
+    std::cout <<  0.95f << '\n';
+ 
 
 
+    num = count_above(v, 0.5f);
+    std::cout << num << std::endl;
 
+    std::vector<Detection> filterd = filter(v, 0.5f);
+    for (const auto& d : filterd){
+        print(d);
+    }
 
 
 }

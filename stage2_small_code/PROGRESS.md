@@ -1,6 +1,6 @@
 # Stage 進度
 
-最後更新:2026-08-09
+最後更新:2026-08-12
 
 ## Stage 0 —— 環境確認 ✅ 完成
 
@@ -38,7 +38,7 @@ Stage 2/5 的記憶體練習全白做)。
 ASan 非「內建」而是 compiler-instrumented、機制是 redzone + shadow memory
 而非「存取前後做邊界檢查」)
 
-## Stage 1 —— 語法暖身(進行中,目錄 `phase1_warmup/`)
+## Stage 1 —— 語法暖身 ✅ 完成(目錄 `phase1_warmup/`)
 
 **目標**:手指暖機。重點不是學新語法,是**看到「拷貝真的發生了」**。
 考點:range-for by value vs by const&、參數傳遞方式、`auto` 會不會帶走 `&`。
@@ -69,37 +69,23 @@ ASan 非「內建」而是 compiler-instrumented、機制是 redzone + shadow me
 `std::vector<float> mask` 成員,每圈拷貝變成 new + 元素 memcpy + delete。
 shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 
-### 待辦:三支函式
+### 已完成:三支函式 ✅
 
-`print` / `count_above` / `filter` 只有宣告沒有定義(未被呼叫,所以連結器不報錯
-—— 順帶學到「宣告 vs 定義」與連結期只解析用到的符號)。
+- `print` — `std::fixed + setprecision(2)` 排版，注意 sticky 效果
+- `count_above` — `int n = 0` 初始化（未初始化是 UB）
+- `filter` — NRVO 優化，回傳 local vector 不會複製
 
-兩支函式是**刻意的對照組**,差別在回傳型別:
-- `count_above` 回傳 `int` —— 便宜的基準線
-- `filter` 回傳 `std::vector<Detection>` —— 考「回傳大物件貴不貴」。
-  答案是不貴,靠 NRVO,退而求其次靠 move。C++98 年代要用 `out` 參數規避。
-  **真正的證明留到 Stage 3 加建構/解構 log 時揭曉**
+**順帶學到**
+- `std::fixed + setprecision(2)` 是 sticky，設完後整個 `std::cout` 都套用
+- NRVO 觸發條件：一個函式、一條 return、回傳同一個 local 物件
+- NRVO 失效：多條 return path 回不同物件；手動 `return std::move(x)` 反而擋掉
 
-繼續前記得把 999 那段驗證程式碼刪掉,否則 `count_above` 結果會亂。
+**驗收結論（已過）**
+- `auto` 推導丟掉 reference 和 top-level const，`&`/`const` 要手寫
+- `const&` 參數 = 唯讀借用：省複製 + 保護原始資料
+- 有 heap 資源或 > 64 bytes 才一定傳 `const&`；24 bytes 邊界，含 vector 成員就不行
 
-**原始規格**:`phase1/main.cpp`
-1. `struct Detection { int id; float score; float x, y, w, h; };`
-2. `std::vector<Detection>` 塞 5 筆(score 有高有低)
-3. 三種迴圈各跑一次,每圈印元素位址 `&d`:
-   `for (auto d : v)` / `for (const auto& d : v)` / `for (auto& d : v)`
-   對照 `&v[0]` —— by value 那圈位址會不同(是複本)
-4. `int count_above(const std::vector<Detection>& v, float thr)` 計 score 超過門檻的筆數
-5. `std::vector<Detection> filter(const std::vector<Detection>& v, float thr)`
-   回傳新 vector
-6. `void print(const Detection& d)`,用 `std::fixed` + `setprecision(2)` 排版
-
-**驗收問題**
-1. 三種迴圈位址差在哪?`auto` 為什麼不會自動帶走 `&`?
-2. `filter` 回傳整個 vector,會不會複製一份?為什麼?(RVO / move)
-3. `const std::vector<Detection>&` 的 `const` 和 `&` 各擋掉什麼?
-4. `Detection` 24 bytes,by value 傳有什麼問題?多大才該改傳 reference?
-
-## Stage 2 —— 指標與陣列運算(未開始)
+## Stage 2 —— 指標與陣列運算(下一步)
 
 **場景**:V4L2 拿到的是裸 `unsigned char*` + `width / height / stride`。
 `stride > width`(driver 對齊用的 padding)是 perception pipeline 最常見的入門 bug。
