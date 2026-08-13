@@ -37,3 +37,22 @@ int x = 5;    // ① copy initialization
 int y(5);     // ② direct initialization
 int z{5};     // ③ brace initialization (uniform init, C++11+)
 ```
+
+
+  1. for (auto d : v) 裡面改 d.score = 999 —— loop 跑完 v[0].score 會變嗎?為什麼?
+  std::vector<int> filter(const std::vector<int>& v) {
+      std::vector<int> result;
+      // ... push_back ...
+      return result;
+  }
+  2. 回傳 result 會發生幾次拷貝?為什麼?
+  3. const auto& d vs auto& d —— 什麼時候用哪個?
+
+  答完我再出 Stage 2 的鷹架。
+
+✻ Sautéed for 10s
+
+❯ 1. 不會 因為改的是複製品 2. 不會發生拷貝 因為根據NRVO function會直接建立在呼叫者的地址上 3. 
+  只需要讀取時用const auto& d 需要修改值本身時就用auto& d                                     
+
+● 三題全對，NRVO 解釋也到位。

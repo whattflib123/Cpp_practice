@@ -1,6 +1,6 @@
 # Stage 進度
 
-最後更新:2026-08-12
+最後更新:2026-08-13
 
 ## Stage 0 —— 環境確認 ✅ 完成
 
@@ -85,27 +85,30 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 - `const&` 參數 = 唯讀借用：省複製 + 保護原始資料
 - 有 heap 資源或 > 64 bytes 才一定傳 `const&`；24 bytes 邊界，含 vector 成員就不行
 
-## Stage 2 —— 指標與陣列運算(下一步)
+## Stage 2 —— 指標與陣列運算（進行中，目錄 `phase2_pointer/`）
 
 **場景**:V4L2 拿到的是裸 `unsigned char*` + `width / height / stride`。
 `stride > width`(driver 對齊用的 padding)是 perception pipeline 最常見的入門 bug。
 
-**規格**:`phase2/main.cpp`,`width=6 / height=4 / stride=8`
-1. `new unsigned char[stride * height]`,整塊先填 `0xFF` 當 padding 哨兵
-2. 只用 pointer arithmetic(禁二維陣列語法)填有效像素:
-   第 y 行起點 `buf + y * stride`,只填前 `width` 格,值 `y * 10 + x`
-3. `void dump(const unsigned char*, int width, int height, int stride)` 印整塊含 padding
-4. `double average(const unsigned char*, int width, int height, int stride)`
-   只計有效像素;若誤用 stride 當內圈上限,平均會被 255 拉高
-5. 函式內外各印一次 `sizeof(buf)`,比較(考點:array decay)
-6. 故意存取第 `height` 行看 ASan 報什麼,再註解掉重跑
-7. `delete[] buf`
+### 已完成 ✅
 
-**驗收問題**
-1. `buf + y * stride + x`,若 `buf` 改成 `int*` 算出的位址一樣嗎?為什麼?
-2. 兩個 `sizeof` 印出什麼?為什麼不同?這現象叫什麼?
-3. `average` 的參數為什麼是 `const unsigned char*`?
-4. 為什麼不能省略 `stride` 直接用 `width` 算位址?
+- `new` 配置 + `std::fill` 整塊填 `0xFF`
+- pointer arithmetic 填有效像素：`buf[y * stride + x] = y * 10 + x`
+- `dump`：印整塊，padding 位置顯示 `FF`
+- `average`：只算有效像素（x < width），正確答案 `17.5`
+- stride bug 對比：內圈誤用 stride → `102.5`（被 0xFF 拉高）
+- `sizeof` 對比：main/dump 兩處都印 `8`（array decay，指標不帶長度）
+- `delete[] buf`
+
+**驗收問題（已過）**
+1. `buf` 改 `int*` → 步長變 4，位址不同，byte offset 差 4 倍
+2. 兩個 `sizeof` 都印 `8` → array decay；指標不帶長度資訊
+3. `const unsigned char*` → 唯讀借用，省複製，保護原始資料
+4. 不能省 stride → padding 存在，行尾地址靠 stride 跳
+
+### 待完成 ⬜
+
+- ASan 越界測試：`buf[height * stride] = 0;` 取消註解，觀察報告，再改回
 
 ## Stage 3~8 —— 未開始
 
