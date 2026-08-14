@@ -1,6 +1,6 @@
 # Stage 進度
 
-最後更新:2026-08-13
+最後更新:2026-08-14
 
 ## Stage 0 —— 環境確認 ✅ 完成
 
@@ -85,7 +85,7 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 - `const&` 參數 = 唯讀借用：省複製 + 保護原始資料
 - 有 heap 資源或 > 64 bytes 才一定傳 `const&`；24 bytes 邊界，含 vector 成員就不行
 
-## Stage 2 —— 指標與陣列運算（進行中，目錄 `phase2_pointer/`）
+## Stage 2 —— 指標與陣列運算 ✅ 完成（目錄 `phase2_pointer/`）
 
 **場景**:V4L2 拿到的是裸 `unsigned char*` + `width / height / stride`。
 `stride > width`(driver 對齊用的 padding)是 perception pipeline 最常見的入門 bug。
@@ -106,9 +106,9 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 3. `const unsigned char*` → 唯讀借用，省複製，保護原始資料
 4. 不能省 stride → padding 存在，行尾地址靠 stride 跳
 
-### 待完成 ⬜
+### 待完成
 
-- ASan 越界測試：`buf[height * stride] = 0;` 取消註解，觀察報告，再改回
+全部完成。
 
 ## Stage 3~8 —— 未開始
 
