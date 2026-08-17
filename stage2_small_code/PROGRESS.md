@@ -110,7 +110,29 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 
 全部完成。
 
-## Stage 3~8 —— 未開始
+## Stage 3 —— 物件生命週期 ✅ 完成（目錄 `phase3_obj_life/`）
+
+最後更新：2026-08-17
+
+**場景**：frame 傳遞的核心直覺。搞錯傳值方式 = 每幀多複製 8 MB。
+
+### 已完成 ✅
+
+- `Tracker` class：ctor / copy ctor / move ctor / dtor 全帶 log
+- 題 3-1：`Tracker a(1)` → 看到 ctor + dtor，LIFO 順序驗證
+- 題 3-2：`Tracker b = a` → copy ctor 出現，dtor 兩次
+- 題 3-3：`inspect(const Tracker&)` → copy ctor 消失，dtor 少一次
+- 題 3-4：NRVO — `return t` 正常編譯無 copy；`-fno-elide-constructors` 關掉後 move 出現
+- 題 3-5：`std::move(a)` → move ctor 觸發；moved-from 的 `a` 仍活著（valid but unspecified）
+
+**關鍵觀念（已過）**
+- dtor 順序 LIFO：後建構先解構
+- `const&` = 唯讀借用，零成本；`&` = 可寫借用；by-value = 複製
+- NRVO：一函式一 return 同一 local → 編譯器直接在呼叫端建構，無複製
+- move ≠ 自動清空：move ctor 裡要自己把來源資源設 null，防 double free
+- moved-from state：valid but unspecified，能 dtor，不能假設值
+
+## Stage 4~8 —— 未開始
 
 大綱見 repo root 的 `CLAUDE.md`。
 
