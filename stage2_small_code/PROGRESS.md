@@ -1,6 +1,6 @@
 # Stage 進度
 
-最後更新:2026-08-13
+最後更新:2026-08-14
 
 ## Stage 0 —— 環境確認 ✅ 完成
 
@@ -85,7 +85,7 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 - `const&` 參數 = 唯讀借用：省複製 + 保護原始資料
 - 有 heap 資源或 > 64 bytes 才一定傳 `const&`；24 bytes 邊界，含 vector 成員就不行
 
-## Stage 2 —— 指標與陣列運算（進行中，目錄 `phase2_pointer/`）
+## Stage 2 —— 指標與陣列運算 ✅ 完成（目錄 `phase2_pointer/`）
 
 **場景**:V4L2 拿到的是裸 `unsigned char*` + `width / height / stride`。
 `stride > width`(driver 對齊用的 padding)是 perception pipeline 最常見的入門 bug。
@@ -106,11 +106,33 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 3. `const unsigned char*` → 唯讀借用，省複製，保護原始資料
 4. 不能省 stride → padding 存在，行尾地址靠 stride 跳
 
-### 待完成 ⬜
+### 待完成
 
-- ASan 越界測試：`buf[height * stride] = 0;` 取消註解，觀察報告，再改回
+全部完成。
 
-## Stage 3~8 —— 未開始
+## Stage 3 —— 物件生命週期 ✅ 完成（目錄 `phase3_obj_life/`）
+
+最後更新：2026-08-17
+
+**場景**：frame 傳遞的核心直覺。搞錯傳值方式 = 每幀多複製 8 MB。
+
+### 已完成 ✅
+
+- `Tracker` class：ctor / copy ctor / move ctor / dtor 全帶 log
+- 題 3-1：`Tracker a(1)` → 看到 ctor + dtor，LIFO 順序驗證
+- 題 3-2：`Tracker b = a` → copy ctor 出現，dtor 兩次
+- 題 3-3：`inspect(const Tracker&)` → copy ctor 消失，dtor 少一次
+- 題 3-4：NRVO — `return t` 正常編譯無 copy；`-fno-elide-constructors` 關掉後 move 出現
+- 題 3-5：`std::move(a)` → move ctor 觸發；moved-from 的 `a` 仍活著（valid but unspecified）
+
+**關鍵觀念（已過）**
+- dtor 順序 LIFO：後建構先解構
+- `const&` = 唯讀借用，零成本；`&` = 可寫借用；by-value = 複製
+- NRVO：一函式一 return 同一 local → 編譯器直接在呼叫端建構，無複製
+- move ≠ 自動清空：move ctor 裡要自己把來源資源設 null，防 double free
+- moved-from state：valid but unspecified，能 dtor，不能假設值
+
+## Stage 4~8 —— 未開始
 
 大綱見 repo root 的 `CLAUDE.md`。
 
