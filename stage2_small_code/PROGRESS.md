@@ -132,7 +132,28 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 - move ≠ 自動清空：move ctor 裡要自己把來源資源設 null，防 double free
 - moved-from state：valid but unspecified，能 dtor，不能假設值
 
-## Stage 4~8 —— 未開始
+## Stage 4 —— 拷貝 vs 搬移：Rule of Five ✅ 完成（目錄 `phase4_rule_of_five/`）
+
+最後更新：2026-08-18
+
+**場景**：Frame 持有 heap buffer，copy/move 成本差距在 inference loop 裡才看得見。
+
+### 已完成 ✅
+
+- `Frame` class：`char* buf` + `int size` + `int id`，帶 log 的 ctor/dtor
+- 題 4-1：故意不寫 copy ctor → ASan 報 double-free（shallow copy 兩個指標指同一塊）
+- 題 4-2：加 copy ctor（deep copy）→ double-free 消失，兩個 dtor 各自清各自的
+- 題 4-3：加 copy assignment → `b = a`，先 `delete[] buf` 清舊資源再複製
+- 題 4-4：加 move ctor（`noexcept`）→ `other.buf = nullptr` 防 double-free
+- 題 4-5：加 move assignment（`noexcept`）→ 先清自己，再接管來源，再清來源
+
+**關鍵觀念（已過）**
+- copy ctor vs copy assignment：前者建新物件（無舊資源），後者覆寫已存在（要先 delete）
+- move ctor 必須手動 `other.buf = nullptr`：不寫 → dtor 時 double-free
+- `noexcept` 對 `std::vector`：有 → 擴容用 move（O(1)）；沒有 → 用 copy（O(n)），原因是 strong exception safety guarantee
+- self-assign guard：`if (this == &other) return *this`，在 `delete[] buf` 之前
+
+## Stage 5~8 —— 未開始
 
 大綱見 repo root 的 `CLAUDE.md`。
 
