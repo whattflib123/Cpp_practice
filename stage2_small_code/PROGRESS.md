@@ -153,22 +153,27 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 - `noexcept` 對 `std::vector`：有 → 擴容用 move（O(1)）；沒有 → 用 copy（O(n)），原因是 strong exception safety guarantee
 - self-assign guard：`if (this == &other) return *this`，在 `delete[] buf` 之前
 
-## Stage 5 —— 把裸 C API 包成 RAII 🔄 進行中（目錄 `phase5_raii/`）
+## Stage 5 —— 把裸 C API 包成 RAII ✅ 完成（目錄 `phase5_raii/`）
 
-最後更新：2026-08-19
+最後更新：2026-08-20
 
 **場景**：cudaMalloc / mmap 等 C API 沒有建構子/解構子，中途 return 或 throw 會 leak。
 
 ### 已完成 ✅
 
-- 題 5-1：`process_raw` 裸 `malloc(64)` + 提早 return → `ASAN_OPTIONS=detect_leaks=1` 確認 leak
-  - 踩到的坑：`malloc(sizeof(64))` = 4 bytes（sizeof(int)），不是 64 bytes
-- 題 5-2：`MallocBuffer` RAII class，ctor `malloc`、dtor `free` → 提早 return 時 dtor 自動執行，leak 消失
+- 題 5-1：裸 `malloc(64)` + 提早 return → `ASAN_OPTIONS=detect_leaks=1` 確認 leak
+  - 坑：`malloc(sizeof(64))` = 4 bytes（sizeof(int)），不是 64
+- 題 5-2：`MallocBuffer` RAII class，ctor `malloc`、dtor `free` → leak 消失
+- 題 5-3：`return` 換成 `throw` → exception 路徑也觸發 dtor，無 leak
+- 題 5-4：`= delete` copy（編譯期擋），加 move ctor（unique ownership）
 
-### 待完成
-
-- 題 5-3：把 `return` 換成 `throw`，確認 exception 路徑也觸發 dtor（exception safety）
-- 題 5-4：`= delete` copy，加 move ctor，確認 RAII wrapper 是 move-only
+**關鍵觀念（已過）**
+- RAII：任何離開 scope 的方式（正常、return、throw）都保證 dtor 執行
+- `= delete`：把 double-free 從執行期崩潰提前變成編譯期報錯
+- move-only unique ownership：兩個 owner → 兩個 dtor → double-free
+- `unique_ptr` 就是系統寫好的 RAII wrapper，Rule Zero 用它當成員就不用手寫 Rule of Five
+- exception safety 三等級：no-throw / strong / basic
+- `lock_guard`：RAII wrapper for mutex，dtor 保證解鎖
 
 ## Stage 6~8 —— 未開始
 
