@@ -175,7 +175,28 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 - exception safety 三等級：no-throw / strong / basic
 - `lock_guard`：RAII wrapper for mutex，dtor 保證解鎖
 
-## Stage 6~8 —— 未開始
+## Stage 6 —— `std::span` 借用語意 ✅ 完成（目錄 `phase6_span/`）
+
+最後更新：2026-08-20
+
+**場景**：TensorRT output buffer 後處理，裸指標傳入函式長度消失，span 帶著走。
+
+### 已完成 ✅
+
+- 題 6-1：`print_raw(int*, int len)` vs `print_span(span<const int>)` — span 自動推長度
+- 題 6-2：從 `vector` 建 span，驗證 `vec.data() == s.data()`，`s[0]=999` 穿透到原始資料
+- 題 6-3：`span<const int>` — `s[0]=999` 編譯期報錯（read-only location）
+- 題 6-4：dangling span — `make_span()` 回傳指向已銷毀 vector 的 span → ASan `heap-use-after-free`
+- 題 6-5：`subspan(i*5, 5)` 取每個 bounding box，印 score
+
+**關鍵觀念（已過）**
+- span = 非擁有視圖，帶指標 + 長度，零複製，零 heap 配置
+- `span<const int>` vs `const span<int>`：前者管元素，後者管 span 物件本身（類比 `const int*` vs `int* const`）
+- dangling span：span 生命週期不能超過來源資料，編譯器不擋，只有 ASan 抓
+- `span<const int>` 函式參數比 `const vector<int>&` 更通用（接受 array、vector、raw pointer 全部）
+- `string_view` 是字串版 span，概念相同，多字串 API
+
+## Stage 7~8 —— 未開始
 
 大綱見 repo root 的 `CLAUDE.md`。
 
