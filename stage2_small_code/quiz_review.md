@@ -110,27 +110,51 @@ void g(int (&a)[8])  { sizeof(a); }   // 32 — reference to array，帶長度
 
 ---
 
-## Stage 5 開場（日期：不明，原文已遺失）
+## Stage 5 開場（2026-08-20 補考）
 
-考 RAII 概念（Stage 5 進入前）。
+原 transcript 被 compact，題目已遺失；根據當時答案重建題目後重新作答。
 
-**Q1**（問題原文已遺失）
+---
 
-**你的答案**：ctor 負責分配記憶體，dtor 負責釋放
+**Q1**
+RAII 的核心概念是什麼？`ctor` 和 `dtor` 各負責什麼？
 
-✅（根據 compaction summary 記錄，當時答對）
+**你的答案**：ctor 負責創建記憶體的位置，dtor 負責釋放
 
-**Q2**（問題原文已遺失）
+⚠️ 方向對，精確度差一點。
+RAII 的 ctor 是**獲取任何資源**（`malloc`、`fopen`、`pthread_mutex_lock`、`cudaMalloc`…），不只是記憶體。dtor 釋放那個資源；任何離開 scope 的方式都保證 dtor 執行。
+面試標準答法：「ctor 獲取資源，dtor 釋放；RAII 保證任何 scope 出口（正常、return、throw）都執行 dtor。」
 
-**你的答案**：因為提早 return 不會進到 free；RAII 版本一定會呼叫到 dtor
+---
 
-✅（當時答對）
+**Q2**
+這段程式會 leak 嗎？為什麼？RAII 版本怎麼解決？
 
-**Q3**（問題原文已遺失）
+```cpp
+void process(bool fail) {
+    int* p = (int*)malloc(64);
+    if (fail) return;
+    free(p);
+}
+```
 
-**你的答案**：配置 8 bytes，因為一筆資料就是 8 bytes
+**你的答案**：可能會，因為 return 發生在 free 前面；RAII 會把 free 等釋放記憶體的方式與 dtor 綁定，確保會執行
 
-（正誤不明，問題原文已遺失，無法比對）
+✅ 正確。RAII 把釋放綁到 dtor → scope 出去一定跑，無論正常 return 或 throw。
+
+---
+
+**Q3**
+下面這行配置了幾個 bytes？
+
+```cpp
+void* ptr = malloc(sizeof(64));
+```
+
+**你的答案**：4 bytes
+
+✅ 正確。`sizeof(64)` = `sizeof(int)` = 4 bytes。`64` 是 `int` 字面量，`sizeof` 看的是型別大小，不是數值。
+配置 64 bytes 要寫 `malloc(64)`，不是 `malloc(sizeof(64))`。
 
 ---
 
