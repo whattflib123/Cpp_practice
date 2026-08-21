@@ -10,6 +10,44 @@
 
 ---
 
+## Stage 7 開場（2026-08-21）
+
+考 Stage 5、6 舊觀念。
+
+---
+
+**Q1**
+```cpp
+const std::span<int> s = vec;
+s[0] = 999;  // 合法？
+```
+合法還是編譯錯誤？為什麼？
+
+**你的答案**：合法，因為 const 在這裡修飾 span，不能指向別的地方
+
+✅ 正確。`const` 在 span 物件本身，element type 是 `int`，所以 `s[0]=999` 合法。
+
+---
+
+**Q2**
+move ctor 裡為什麼要寫 `other.buf = nullptr`？不寫會怎樣？
+
+**你的答案**：不寫最後會有兩個指標指向同一記憶體，解構時 double-free
+
+✅ 正確。
+
+---
+
+**Q3**
+RAII class 的 copy ctor 寫 `= delete` 和「直接不寫」有什麼差別？
+
+**你的答案**：防呆機制，RAII 避免複製，誤用 copy 時會在編譯時卡住
+
+⚠️ 方向對，差一個細節。
+「直接不寫」在某些條件下編譯器會自動生成 copy ctor（class 沒有 user-declared move ctor/dtor 時）。`= delete` 是明確禁止，無論任何條件都不會有 copy ctor，且報錯訊息清楚說明「此操作被刪除」。
+
+---
+
 ## Stage 6 開場（2026-08-20）
 
 考 Stage 4、5 舊觀念。
