@@ -196,7 +196,27 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 - `span<const int>` 函式參數比 `const vector<int>&` 更通用（接受 array、vector、raw pointer 全部）
 - `string_view` 是字串版 span，概念相同，多字串 API
 
-## Stage 7~8 —— 未開始
+## Stage 7 —— `std::vector` capacity vs size ✅ 完成（目錄 `phase7_vector_capacity/`）
+
+最後更新：2026-08-21
+
+**場景**：detection queue 效能，push_back 為什麼有時候慢。
+
+### 已完成 ✅
+
+- 題 7-1：觀察 capacity 翻倍成長（×2 規律）
+- 題 7-2：`reserve(20)` 消除所有 reallocation
+- 題 7-3：`push_back` 觸發 reallocation → iterator 失效 → ASan `heap-use-after-free`
+- 題 7-4：`reserve` 夠大 → 無 reallocation → iterator 安全
+
+**關鍵觀念（已過）**
+- `size` = 元素數；`capacity` = 配置空間；reallocation 在 size==capacity 時觸發
+- amortized O(1)：capacity ×2 策略，n 次 push_back 總搬移量 2n，平均 O(1)
+- `reserve` 預訂容量不建構元素；`resize` 真的建構（或銷毀）元素
+- reallocation 用 move 還是 copy：move ctor 有 `noexcept` → move；沒有 → copy（strong exception safety）
+- iterator invalidation：任何觸發 reallocation 或移動元素的操作都讓 iterator 失效
+
+## Stage 8 —— 未開始
 
 大綱見 repo root 的 `CLAUDE.md`。
 
