@@ -10,6 +10,10 @@
 
 ---
 
+## Stage 8 開場（待補）
+
+---
+
 ## Stage 7 開場（2026-08-21）
 
 考 Stage 5、6 舊觀念。
@@ -45,6 +49,43 @@ RAII class 的 copy ctor 寫 `= delete` 和「直接不寫」有什麼差別？
 
 ⚠️ 方向對，差一個細節。
 「直接不寫」在某些條件下編譯器會自動生成 copy ctor（class 沒有 user-declared move ctor/dtor 時）。`= delete` 是明確禁止，無論任何條件都不會有 copy ctor，且報錯訊息清楚說明「此操作被刪除」。
+
+---
+
+## Stage 7 面試追問（2026-08-21）
+
+---
+
+**Q：`resize` 和 `reserve` 差在哪？**
+
+**你的答案**：不知道 resize；reserve 會預先保留記憶體容量
+
+補充：
+- `reserve(n)` 只改 capacity，size 不變，不建構元素
+- `resize(n)` 改 size：n > size 補建構元素（預設值），n < size 銷毀尾端元素，可能觸發 reallocation
+
+記法：reserve = 預訂座位（不坐人）；resize = 真的搬人進來或趕出去。
+
+---
+
+**Q：reallocation 時用 move 還是 copy？什麼條件決定？**
+
+**你的答案**：用 copy，由 noexcept 決定，因為編譯器避免搬到一半失敗損毀原始資料
+
+⚠️ 邏輯對，結論說反。
+- move ctor 有 `noexcept` → 用 **move**（O(1) per element）
+- move ctor 沒有 `noexcept` → 退回 **copy**（O(n)），保證 strong exception safety
+
+---
+
+**Q：哪些 vector 操作會讓 iterator 失效？哪些安全？**
+
+**你的答案**：不知道
+
+正解：
+- 失效：`push_back`/`emplace_back`（capacity 不夠時）、`insert`、`erase`、`resize`、`clear`
+- 安全：`reserve`（不觸發 reallocation 時）、`operator[]`、`at()`、`front()`、`back()`
+- 原則：任何觸發 reallocation 或移動元素位置的操作都讓 iterator 失效
 
 ---
 
