@@ -216,9 +216,28 @@ shallow copy vs deep copy,直通 Stage 4 Rule of Five。
 - reallocation 用 move 還是 copy：move ctor 有 `noexcept` → move；沒有 → copy（strong exception safety）
 - iterator invalidation：任何觸發 reallocation 或移動元素的操作都讓 iterator 失效
 
-## Stage 8 —— 未開始
+## Stage 8 —— Mini Frame Queue（整合） ✅ 完成（目錄 `phase8_frame_queue/`）
 
-大綱見 repo root 的 `CLAUDE.md`。
+最後更新：2026-08-21
+
+**場景**：capture → inference 資料流縮小版，單執行緒。
+
+### 已完成 ✅
+
+- 題 8-1：`Frame` Rule of Zero 版（`unique_ptr<char[]>`），move 轉移所有權
+- 題 8-2：`FrameQueue::push(Frame&&)` + `pop()`，vector + reserve
+- 題 8-3：`process(std::span<const char>)`，span 讀 Frame 資料
+- 題 8-4：完整 pipeline：push 3 frames → pop all → process，ASan 無報錯
+
+**關鍵觀念（已過）**
+- Rule of Zero：成員用 `unique_ptr` / `vector`，compiler 自動產生正確的 copy/move/dtor
+- `push(Frame&&)`：`&&` 強制呼叫方交出所有權，編譯期擋住誤傳 lvalue
+- `reserve`：省 reallocation + 防 iterator invalidation
+- 延伸：改成多執行緒需要 `std::mutex` + `std::condition_variable`（producer-consumer）
+
+## Stage 0–8 全部完成 🎉
+
+延伸考點見 `CLAUDE.md`：const correctness、多型/vtable、template、exception safety 等級、多執行緒基礎、UB 常見案例。
 
 ## 已順帶教過的東西(避免重複)
 
