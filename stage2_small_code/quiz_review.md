@@ -10,7 +10,39 @@
 
 ---
 
-## Stage 8 開場（待補）
+## Stage 8 開場（2026-08-21）
+
+考 Stage 4、6、7 舊觀念。
+
+---
+
+**Q1**
+什麼條件下 `push_back` 之後舊的 iterator 還是有效的？
+
+**你的答案**：沒有超過 capacity 大小，不需要 reallocate 的情況
+
+✅ 正確。capacity 夠大不觸發 reallocation → 舊 iterator 有效。
+
+---
+
+**Q2**
+寫一個回傳 `std::span<int>` 的函式，什麼情況下安全、什麼情況下 dangling？
+
+**你的答案**：把 span 和 RAII 的 return 問題搞混了，忘記 span 是什麼
+
+❌ 需要複習。
+- dangling：函式內建 local vector，回傳指向它的 span → vector 死了，span 指向釋放的記憶體
+- 安全：span 指向 caller 傳入的資料，或靜態/全域資料，caller 活著 span 就有效
+- 關鍵：span 生命週期不能超過它指向的資料
+
+---
+
+**Q3**
+`Frame` 有 `char* buf`，只寫了 dtor，沒寫 copy ctor。`Frame b = a` 後兩個 dtor 各自執行，會發生什麼？
+
+**你的答案**：會有 double delete，因為兩個指標指向同一個記憶體
+
+✅ 正確。compiler 預設 copy ctor 是 shallow copy → 兩個 buf 指向同一塊 → 兩個 dtor delete[] → double-free。
 
 ---
 
