@@ -10,26 +10,33 @@ Felix 的 C++ 練習簿。目標**不只是**把 C++ 練到能撐起 SRAM 的 AM
 
 ## 使用者現況
 
-- 概念上熟悉 modern C++ 詞彙(RAII、move semantics、smart pointer、`std::span`),
-  但**還沒真正大量動手寫過**。認得 ≠ 手指打得出來。
-- 採「問題驅動式」複習,不重讀語法書。每個練習是 30~80 行、寫完立刻編譯執行、
-  看到具體行為的小程式。
+- **Stage 0~8 已完成。** 語法直覺(pointer、Rule of Five、RAII、span、vector
+  capacity/size)已經打穩,不是「認得」而是「手指打得出來」。
+- **現階段風險不是語法不熟,是停留在孤立練習題裡。** 已知的 Stage 0~8 觀念
+  必須搬進真實專案(EdgeInferencePool / FactoryPerception)才算兌現,面試答的
+  是「這段程式碼在解決什麼實際問題」,不是練習題的假設情境。
+- 進入 **Stage 9~11 整合期**:多執行緒延伸、EdgeInferencePool 真代碼整合、
+  ROS2 所有權模型接軌。方法論(問題驅動、微題階梯、對比組印結果)不變,
+  只是主角從獨立練習題換成真實專案程式碼。
 
 ### 學習特性(他自述,務必配合)
 
-- **微題階梯（已驗證最適模式）：任何大任務先拆成一串微題。** 每題 10-20 行、只引入
-  一個新概念、有秒級可驗證回饋（跑得起來、對得了答案）。零件全練過才組裝成完整任務。
-  難度落在「墊一塊磚搆得到」：太簡單跳過，太難就再拆細一階。
-  **反例（已實測失敗）**：叫他閉卷從空白重寫學過的完整程式 → 直接卡死。
+- **微題階梯(已驗證最適模式):任何大任務先拆成一串微題。** 每題 10-20 行、只引入
+  一個新概念、有秒級可驗證回饋(跑得起來、對得了答案)。零件全練過才組裝成完整任務。
+  難度落在「墊一塊磚搆得到」:太簡單跳過,太難就再拆細一階。
+  **反例(已實測失敗)**:叫他閉卷從空白重寫學過的完整程式 → 直接卡死。
+  **Stage 9~11 適用同一原則**:即使是搬進真實 repo,也先拆成「先在 stage2 式
+  獨立小檔驗證新觀念,再搬進正式 repo」兩步,不要求他直接在正式專案裡摸索。
 
 - **寫過的程式碼大機率會忘,要複習多次才熟練。** 這不是理解力問題,是重複次數不夠。
   實例:phase1 暖身時,`stage1_basic` 已練過的 `vector` / `struct` / 函式定義語法
   當場想不起來。
-  → **新任務開場先小考幾題舊概念**（先讓他答再對答案，答錯才講解）。
+  → **新任務開場先小考幾題舊概念**(先讓他答再對答案,答錯才講解)。
   → 開新練習前主動點出「這裡會用到你在 X 練過的 Y」,並附**極簡語法參考卡**
     (用**不同型別**舉例,不要直接給練習答案)。
   → 卡住時先分辨語法卡 / 空白頁卡 / 工具卡。語法卡就直接給參考卡,不要逼他回想。
   → 隔一段時間主動抽考舊關卡觀念,不要假設講過就記得。
+  → **Stage 9~11 開場小考範圍擴大到 Stage 0~8 全部**,不只是上一關。
 
 - **「對比組 + 印出實際結果」吸收最好,純文字講解吸收差。**
   實例:phase1 用三種 range-for 印 `&d` 位址,他當場看懂 `auto` 不帶 `&`;
@@ -38,15 +45,20 @@ Felix 的 C++ 練習簿。目標**不只是**把 C++ 練到能撐起 SRAM 的 AM
     故意寫錯讓 ASan 報。
   → 先給「跑跑看」的三行程式,再給結論,不要反過來。
   → 他答錯時,優先用**他自己剛跑出來的數據**反駁,比引用規則有說服力。
+  → **Stage 9(多執行緒)延伸**:故意留 race condition,用 TSan 報告當「他自己
+    跑出來的數據」,取代單純文字解釋 data race。
 
 ## 協作規則(重要,每次都要遵守)
 
 1. **使用者自己動手,除非明確授權。** 不要替他寫練習程式碼、不要替他跑編譯指令。
    給規格、給骨架、給指令,由他執行後貼結果回來。檔案寫入需他開口要求。
-   - **鷹架給薄**：先讓他寫，寫爛再修——自己犯的錯記得比範本牢。
-   - **卡住時**：先問「卡在哪一行、想寫什麼」，給提示不給整段答案。
-   - **完全卡死時**：把鷹架加厚一階（給結構留空格），仍不直接給完整解答。
-   - **他寫對時**：指出哪裡是他自己想出來的亮點，具體說好在哪。
+   - **鷹架給薄**:先讓他寫,寫爛再修——自己犯的錯記得比範本牢。
+   - **卡住時**:先問「卡在哪一行、想寫什麼」,給提示不給整段答案。
+   - **完全卡死時**:把鷹架加厚一階(給結構留空格),仍不直接給完整解答。
+   - **他寫對時**:指出哪裡是他自己想出來的亮點,具體說好在哪。
+   - **Stage 9~11 例外**:正式 repo(EdgeInferencePool / FactoryPerception)的
+     既有架構(如 `InferenceBackend` interface)可以先貼給他讀,但新增/修改的
+     實作邏輯仍由他自己寫,規則同上。
 2. **Review 先講設計/觀念問題,再談 style。**
 3. 「能跑但不是業界慣用寫法」→ 明確說出慣用寫法是什麼、為什麼比較好。
    這類對比正是面試會問的。
@@ -56,39 +68,50 @@ Felix 的 C++ 練習簿。目標**不只是**把 C++ 練到能撐起 SRAM 的 AM
    省了什麼」。**理由講不清楚就直接點出來。**
 6. 每個 Stage 完成後,主動補業界常考、但練習沒直接碰到的延伸考點。
 7. 偶爾用「如果面試官問你 XXX,你答得出來嗎」抽考,確認是真懂還是記住程式碼長相。
-8. **每次開場小考結束後，立即把題目、使用者原答、正解與評語追加到
-   `stage2_small_code/quiz_review.md`，然後 commit。**
+8. **每次開場小考結束後,立即把題目、使用者原答、正解與評語追加到
+   `stage2_small_code/quiz_review.md`,然後 commit。**
    格式參照檔案內既有的條目。
 
 ## 誠實校準原則
 
-對完成度/熟練度誠實，不灌水（Felix 也會誠實自評）：
-- 評語、教材、進度以「**真實會了什麼**」為準，不以「跑通了什麼」為準。
-- 他自評低估時，給具體反例說明他哪裡其實已到位。
-- 他自評高估時，直接指出哪裡還沒穩。
+對完成度/熟練度誠實,不灌水(Felix 也會誠實自評):
+- 評語、教材、進度以「**真實會了什麼**」為準,不以「跑通了什麼」為準。
+- 他自評低估時,給具體反例說明他哪裡其實已到位。
+- 他自評高估時,直接指出哪裡還沒穩。
+- **Stage 9~11 特別注意**:「搬進正式 repo 後能編過」≠「懂了」。搬完要能回答
+  「這裡如果換成 XX 場景會怎麼改」,答不出來就是還沒真的懂,不算完成。
 
 ## 環境(已確認可用)
 
 - **WSL2 + Ubuntu 24.04**,g++ 13.3.0。Windows 端沒有 g++,一律在 WSL 裡編譯。
   (不用 MinGW:沒有 ASan runtime,且 V4L2 是 Linux-only API。)
-- repo 在 Windows 磁碟,WSL 路徑:`/mnt/c/Users/steve/Desktop/C/Cpp_practice`
+- repo 路徑:`/home/felix/Desktop/my_stuff/C`
 - 固定編譯指令:
   ```
   g++ -std=c++20 -Wall -Wextra -g -fsanitize=address main.cpp -o main
   ./main
   ```
   `-g` 必帶,否則 ASan 報告沒有行號。
+- **Stage 9 多執行緒練習額外需要**:`-fsanitize=thread`(TSan)。TSan 和 ASan
+  不能同時開,分開兩次編譯測試。
+- **Stage 10 整合期**:EdgeInferencePool 正式 repo 路徑待補(換機器接手流程時
+  一併記錄)。
 
 ## 目錄結構
 
 - `notes/` —— 八章 C++ 語法筆記(第一~八章)
 - `stage1_basic/phase_1~7/` —— **舊的**語法章節練習,對應 notes 各章。已完成。
-- `stage2_small_code/phase0, phase1_warmup, ...` —— **現在進行中**的就業取向
-  Stage 練習。目錄名沿用 `phase` 前綴,但編號對應大綱的 Stage 0~8。
+- `stage2_small_code/phase0 ~ phase8/` —— **Stage 0~8,已完成**的就業取向獨立
+  練習。目錄名沿用 `phase` 前綴,編號對應大綱 Stage 0~8。
   和 `stage1_basic/phase_*`(底線)是兩套不同體系,不要混用。
+- `stage3_integration/phase9_concurrency, phase10_edgepool, phase11_ros2/` ——
+  **現在進行中**的 Stage 9~11 整合期練習。phase9 仍是獨立小檔(多執行緒觀念
+  驗證);phase10、phase11 是「先在這裡驗證觀念,再貼進正式 repo」的中繼站,
+  正式改動最終落在 EdgeInferencePool / FactoryPerception repo 裡。
 - 每個 phase 目錄下應有 `main.cpp` + `note.md`(該關的觀念筆記)。
 
-進度看 `stage2_small_code/PROGRESS.md`。
+進度看 `stage2_small_code/PROGRESS.md`(Stage 0~8)與
+`stage3_integration/PROGRESS.md`(Stage 9~11)。
 
 ## 換機器 / 新 session 接手流程
 
@@ -96,33 +119,45 @@ Felix 的 C++ 練習簿。目標**不只是**把 C++ 練到能撐起 SRAM 的 AM
 repo 內並 commit:
 
 1. 讀 `CLAUDE.md`(本檔)—— 計畫、規則、他的學習特性
-2. 讀 `stage2_small_code/PROGRESS.md` —— 做到哪、上次的結論、下一步待辦
+2. 讀 `stage2_small_code/PROGRESS.md`(Stage 0~8,已完成)與
+   `stage3_integration/PROGRESS.md`(Stage 9~11)—— 做到哪、上次的結論、
+   下一步待辦
 3. 讀當前 phase 的 `note.md` 和 `main.cpp` —— 實際程式碼狀態
+4. **Stage 10~11 額外**:讀 EdgeInferencePool / FactoryPerception repo 裡被
+   改動的檔案,確認正式 repo 的實際狀態(不能只看 `stage3_integration/` 裡的
+   中繼版本)。
 
-**每個 Stage 有結論就更新 PROGRESS.md 並 commit**,不要只留在對話裡。
+**每個 Stage 有結論就更新對應 PROGRESS.md 並 commit**,不要只留在對話裡。
 對話會消失,repo 不會。
 
-## 練習大綱(Stage 0~8)
+## 練習大綱(Stage 0~11)
 
-| Stage | 主題 | 專案對應場景 | 面試常見追問 |
-|---|---|---|---|
-| 0-1 | 環境確認 + 語法暖身 | — | — |
-| 2 | 指標與陣列運算 | V4L2 裸 buffer / stride | pointer arithmetic、array decay、buffer overflow 除錯經驗 |
-| 3 | 物件生命週期(建構/拷貝/搬移/解構的實際時機) | frame 傳遞的核心直覺 | 何時觸發 copy elision、RVO/NRVO |
-| 4 | 拷貝 vs 搬移(手刻 Rule of Five) | frame queue 為什麼要 `std::move` | Rule of Zero vs Rule of Five、`noexcept` 對 move 的影響 |
-| 5 | 把裸 C API 包成 RAII(先用 malloc 模擬) | mmap / cudaMalloc wrapper 雛形 | exception safety、資源洩漏(手寫會 leak 的例子再修) |
-| 6 | `std::span` 借用語意 | TensorRT output buffer 後處理 | span vs vector vs raw pointer+length、lifetime 風險 |
-| 7 | `std::vector` capacity vs size | detection queue 效能 | amortized O(1) push_back 原理、iterator invalidation |
-| 8 | 整合:mini frame queue(單執行緒) | capture → inference 資料流縮小版 | 延伸成多執行緒會遇到什麼問題(預告,不用解) |
+| Stage | 主題 | 專案對應場景 | 面試常見追問 | 狀態 |
+|---|---|---|---|---|
+| 0-1 | 環境確認 + 語法暖身 | — | — | ✅ 完成 |
+| 2 | 指標與陣列運算 | V4L2 裸 buffer / stride | pointer arithmetic、array decay、buffer overflow 除錯經驗 | ✅ 完成 |
+| 3 | 物件生命週期(建構/拷貝/搬移/解構的實際時機) | frame 傳遞的核心直覺 | 何時觸發 copy elision、RVO/NRVO | ✅ 完成 |
+| 4 | 拷貝 vs 搬移(手刻 Rule of Five) | frame queue 為什麼要 `std::move` | Rule of Zero vs Rule of Five、`noexcept` 對 move 的影響 | ✅ 完成 |
+| 5 | 把裸 C API 包成 RAII(先用 malloc 模擬) | mmap / cudaMalloc wrapper 雛形 | exception safety、資源洩漏(手寫會 leak 的例子再修) | ✅ 完成 |
+| 6 | `std::span` 借用語意 | TensorRT output buffer 後處理 | span vs vector vs raw pointer+length、lifetime 風險 | ✅ 完成 |
+| 7 | `std::vector` capacity vs size | detection queue 效能 | amortized O(1) push_back 原理、iterator invalidation | ✅ 完成 |
+| 8 | 整合:mini frame queue(單執行緒) | capture → inference 資料流縮小版 | 延伸成多執行緒會遇到什麼問題(預告,不用解) | ✅ 完成 |
+| 9 | 多執行緒 producer-consumer frame queue | Stage 8 的預告兌現:`ThreadPool` 派工 + TSan 抓 race | mutex vs lock-free 取捨、TSan 抓到的實際 race 案例怎麼修 | 進行中 |
+| 10 | Stage 2~7 觀念搬進 EdgeInferencePool 正式 repo | `DpuBuffer`(RAII+Rule of Five)、`InferenceBackend`(span 借用語意) 真實實作 | 「這段程式碼在解決什麼實際問題」、真實 buffer 生命週期設計取捨 | 待開始 |
+| 11 | ROS2 sensor callback 所有權模型 | FactoryPerception:camera/LiDAR frame 的 move/span 設計、多 subscriber 所有權 | DMA buffer lifetime、多 subscriber 之間誰擁有資料 | 待開始 |
 
 **Stage 3-4 是整個計畫的核心。** 這兩關直覺打穩,後面都是疊在上面的語法糖。
 面試最常被問倒的也是這兩關(「你能解釋你的 class 裡發生了幾次拷貝嗎」是典型考法)。
 
-## Stage 0-8 之後的延伸考點(先列著,完成後他若問「接下來呢」從這挑)
+**Stage 9~11 是把 Stage 3-4 打穩的直覺兌現到真實專案,是面試敘事的核心來源。**
+單獨練習題答得出來只是及格線,能指著 EdgeInferencePool / FactoryPerception 的
+真實程式碼講清楚同一套觀念,才是這個 repo 最終要交付的東西。
+
+## Stage 11 之後的延伸考點(先列著,完成後他若問「接下來呢」從這挑)
 
 - `const` correctness(含 `const` method、`mutable`)
 - 多型 / virtual function / vtable 運作原理
 - Template 基礎與型別推導(尤其 `auto`、完美轉發 `T&&` + `std::forward`)
 - Exception safety 等級(basic / strong / no-throw guarantee)
-- 基本多執行緒:`std::thread`、`std::mutex`、`std::atomic`(Stage 8 的自然延伸)
+- `std::atomic` 與 lock-free 基礎(Stage 9 多執行緒的進階延伸)
 - UB 常見案例(dangling reference、use-after-free、strict aliasing)
