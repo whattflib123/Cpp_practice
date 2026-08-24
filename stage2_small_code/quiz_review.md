@@ -10,6 +10,35 @@
 
 ---
 
+## Stage 8 面試追問（2026-08-21）
+
+---
+
+**Q：為什麼用 `unique_ptr` 而不是手寫 Rule of Five？**
+
+**你的答案**：省去管理麻煩
+
+⚠️ 方向對，面試要說完整：
+`unique_ptr` 已是 move-only RAII wrapper，成員用它後 compiler 自動產生的 copy/move/dtor 全部正確（copy 被 delete、move 轉移所有權、dtor 自動 delete[]）。不需要手寫任何 special member，也不會有寫錯的風險。這就是 **Rule of Zero**。
+
+---
+
+**Q：`push(Frame&& f)` 為什麼是 `&&`？傳 `Frame f` by value 有什麼差？**
+
+**你的答案**：省去建構的麻煩；後補：`&&` 明確讓呼叫者只能傳 rvalue，強制用 `std::move`
+
+✅ 第二次補充答到核心：`&&` 強制呼叫方交出所有權，編譯期擋住誤傳 lvalue。
+
+---
+
+**Q：`frames.reserve(16)` 不寫會怎樣？**
+
+**你的答案**：可能不斷 reallocate 會變慢
+
+⚠️ 對，但少一個更嚴重的點：reallocation 讓所有 iterator 和指標失效（dangling）。`reserve` 同時解決效能和安全兩個問題。
+
+---
+
 ## Stage 8 開場（2026-08-21）
 
 考 Stage 4、6、7 舊觀念。
