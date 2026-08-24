@@ -10,6 +10,42 @@
 
 ---
 
+## Stage 9 開場（2026-08-21）
+
+考 Stage 4、5、8 舊觀念。
+
+---
+
+**Q1**
+`Frame` 用 `std::unique_ptr<char[]>` 當成員，沒有寫 dtor。為什麼不會 leak？
+
+**你的答案**：因為已經透過 unique_ptr 管理物件的生命週期了
+
+✅ 正確。`unique_ptr` dtor 自動 `delete[]`，scope 結束保證執行，Rule of Zero。
+
+---
+
+**Q2**
+`lock_guard` 是什麼？為什麼用它而不是手動 `mutex.lock()` / `mutex.unlock()`？
+
+**你的答案**：忘記 mutex 了
+
+❌ 需要複習。
+`lock_guard` 是 mutex 的 RAII wrapper：ctor `lock()`，dtor `unlock()`。
+手動 lock/unlock 若中間 throw 或 return，unlock 永遠不執行 → deadlock。
+`lock_guard` 任何 scope 出口都保證 unlock，與 `MallocBuffer` 包 `malloc/free` 同一概念。
+
+---
+
+**Q3**
+`noexcept` 沒寫在 move ctor 上，`std::vector` 擴容時會發生什麼？為什麼？
+
+**你的答案**：vector 擴容時可能怕資料搬遷失敗造成資料毀損，fallback 選用 copy，導致比 move 慢
+
+✅ 完整。沒有 `noexcept` → 退回 copy（O(n)）保 strong exception safety；有 `noexcept` → 用 move（O(1)）。
+
+---
+
 ## Stage 8 面試追問（2026-08-21）
 
 ---
