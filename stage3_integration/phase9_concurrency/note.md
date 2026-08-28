@@ -190,6 +190,33 @@ t();  // 執行
 
 ---
 
+### ThreadPool destructor：為什麼要 `notify_all()`
+
+pool 有 N 個 worker，task 跑完後**全部**都在 `cv.wait` 裡睡著。
+destructor 設 `stop = true` 後，必須喚醒所有人讓他們各自檢查 `stop && empty` 後退出。
+
+```cpp
+~ThreadPool() {
+    { std::lock_guard<std::mutex> g(mtx); stop = true; }
+    cv.notify_all();               // ← 全部喚醒，不是 notify_one
+    for (auto& t : workers) t.join();
+}
+```
+
+`notify_one()` 只叫醒一個 → 其他 N-1 個繼續睡 → `join()` 永遠等不到 → **deadlock**。
+
+### ThreadPool vs ThreadSafeQueue 結構對比
+
+| | ThreadSafeQueue（9-5）| ThreadPool（9-6）|
+|---|---|---|
+| push | `frames.push_back(Frame)` | `tasks.push(function)` |
+| pop | `frames.back()` + `pop_back()` | `tasks.front()` + `pop()` |
+| 資料型別 | `Frame` | `std::function<void()>` |
+| consumer | 外部 thread | pool 內部 worker threads |
+| shutdown | `set_done()` 由外部呼叫 | destructor 自動觸發 |
+
+---
+
 ## 面試常考追問
 
 - data race 和 race condition 差在哪？
@@ -197,4 +224,4 @@ t();  // 執行
 - `condition_variable` 為什麼需要 `unique_lock` 而不是 `lock_guard`？
 - spurious wakeup 是什麼？`cv.wait` 的 predicate lambda 為什麼重要？
 - 這個 queue 的瓶頸在哪？mutex 鎖住整個 queue 有什麼問題？
-- ThreadPool 的 worker 為什麼用 `notify_all()` 而不是 `notify_one()` 來 shutdown？
+- ThreadPool destructor 為什麼用 `notify_all()` 不用 `notify_one()`？
