@@ -43,8 +43,36 @@ public:
     size_t bytes() const { return size; }
 };
 
+
+class Frame {
+    DmaBuffer buf;
+    int id;                        
+public:
+    Frame(int id, size_t size)
+        : buf(size), id(id) {
+        // 印 "[Frame N] created"
+        std::cout << "[Frame " << id << "] created\n";
+    }
+
+    // copy 禁止（DmaBuffer 已 delete copy，Frame 自動繼承）
+    // copy 建構子 不用寫，自動繼承
+    // Frame(const Frame&) = delete;
+    // Frame& operator=(const Frame&) = delete;
+
+    // move：compiler 自動產生即可（為什麼？）
+    // destructor：compiler 自動產生即可（為什麼？）
+
+    int get_id() const { return id; }
+    DmaBuffer& buffer() { return buf; }
+};
+
+
+
+
 int main() {
     // TODO: 建一個 DmaBuffer(1228800)，move 給另一個，觀察 log 順序
-    DmaBuffer a(1228800);
-    DmaBuffer b = std::move(a);
-}
+    Frame a(0, 1228800);
+    Frame b = std::move(a);
+    std::cout << "b id=" << b.get_id() << '\n';
+
+    }
