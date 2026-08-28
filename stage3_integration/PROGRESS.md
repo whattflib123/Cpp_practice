@@ -7,7 +7,7 @@
 **目標**：把 Stage 8 的單執行緒 queue 加上 `std::mutex` + `std::condition_variable`，
 用 TSan 抓 race condition，親眼看到 data race 再修掉。
 
-**狀態**：9-1 ~ 9-5 完成
+**狀態**：✅ 完成（9-1 ~ 9-6）
 
 ### 完成的微題
 - 9-1：故意製造 data race，TSan 報告確認
@@ -22,8 +22,9 @@
 - `set_done()` 必須在 producer thread 內最後呼叫，不能從 main thread 呼叫
 - 效能瓶頸：單一 mutex 使 push/pop 無法真正並行；改善方向：lock-free queue 或 double-buffer
 
-### 待確認
-- CLAUDE.md Stage 9 提到 ThreadPool 派工，note.md 只到 9-5——是否需要 9-6 ThreadPool？
+### 9-6 補完
+- ThreadPool：N worker threads + std::function task queue，destructor 自動 shutdown + join
+- notify_all() vs notify_one() shutdown 差異已理解
 
 ---
 
