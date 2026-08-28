@@ -28,13 +28,26 @@
 
 ---
 
-## Stage 10 —— Stage 2~7 觀念搬進 EdgeInferencePool 正式 repo
+## Stage 10 —— Mini Perception Pipeline（替代原 EdgeInferencePool 整合）
 
-**目標**：`DpuBuffer`（RAII + Rule of Five）、`InferenceBackend`（span 借用語意）真實實作。
+**目標**：Python 原型 → C++ 移植，覆蓋 Stage 2~9 全觀念，建立面試敘事。
 
-**狀態**：未開始
+**狀態**：進行中（10-1 ~ 10-4 完成）
 
-EdgeInferencePool repo 路徑：（待補）
+### 完成
+- 10-1：Python 單執行緒原型（Camera / Frame / InferenceEngine / Detection）
+- 10-2：Python 加 producer-consumer threading（queue.Queue）
+- 10-3：C++ `DmaBuffer`——RAII + Rule of Five + lifecycle log
+- 10-4：C++ `Frame`——Rule of Zero 包住 DmaBuffer，move-only
+
+### 待完成
+- 10-5：`InferenceEngine::run(std::span<float>)`——span 借用語意
+- 10-6：`FrameQueue` + 整合 producer-consumer（完整 pipeline）
+
+### 檔案
+- `stage3_integration/phase10_mini_pipeline/prototype.py`
+- `stage3_integration/phase10_mini_pipeline/main.cpp`
+- `stage3_integration/phase10_mini_pipeline/note.md`
 
 ---
 
