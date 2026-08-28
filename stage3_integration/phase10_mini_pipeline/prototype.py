@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+import threading
+import queue
+
 
 
 @dataclass
@@ -58,9 +61,29 @@ class InferenceEngine:
 
 
 
+# producer thread：loop capture，push 進 q
+def producer(camera, q, n_frames):
+    for _ in range(n_frames):
+        frame = camera.capture()
+        q.put(frame)          # 滿了會自動等
+    q.put(None)               # None = 結束訊號
+
+# consumer thread：pop frame，run inference，印結果
+def consumer(engine, q):
+    while True:
+        frame = q.get()       # 空了會自動等
+        if frame is None:
+            break             # 收到結束訊號 → 退出
+        detections = engine.run(frame)
+        
+        print(f"frame {frame.id}: {len(detections)} detections, "
+                f"buffer size={len(frame.data)} bytes")
+        for d in detections:
+            print(f"  bbox=({d.x1:.1f},{d.y1:.1f},{d.x2:.1f},{d.y2:.1f}) "
+                    f"conf={d.confidence:.2f}")
 
 
-def main():
+def main_10_1():
     camera = Camera()
     engine = InferenceEngine()
 
@@ -72,6 +95,24 @@ def main():
         for d in detections:
             print(f"  bbox=({d.x1:.1f},{d.y1:.1f},{d.x2:.1f},{d.y2:.1f}) "
                   f"conf={d.confidence:.2f}")
+
+
+def main():
+
+    # queue.Queue 是 Python 內建的 thread-safe queue
+    q = queue.Queue(maxsize=10)
+
+
+    camera = Camera()
+    engine = InferenceEngine()
+
+    thread_a = threading.Thread(target=producer, args=(camera, q, 5))
+    thread_b = threading.Thread(target=consumer, args=(engine, q))
+    thread_a.start()
+    thread_b.start()
+    thread_a.join()
+    thread_b.join()
+
 
 
 if __name__ == "__main__":
