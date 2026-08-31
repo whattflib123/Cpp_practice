@@ -334,6 +334,23 @@ void* ptr = malloc(sizeof(64));
 
 ---
 
+## Stage 10 開場（2026-08-31）
+
+---
+
+**Q：`std::span<float>` 和 `const std::vector<float>&` 差在哪？**
+
+**你的答案**：span 只把指標資訊帶進去，可以修改；後者不行
+
+⚠️ 方向對，重點說錯了。
+- `std::span<float>` 預設**可修改**；`const std::vector<float>&` 不可修改——你說反了，但這不是重點。
+- 關鍵差異：
+  1. **non-owning**：span 只是 `(ptr, size)`，不複製、不 malloc；vector& 是真正的 vector 有自己記憶體
+  2. **接受任何連續記憶體**：span 能接 raw array、vector、裸指標+長度；`vector&` 只能接 vector
+- perception pipeline 為什麼重要：DmaBuffer 是裸 `void*`，不是 vector。傳 `vector&` 就要多一次 copy，span 是 zero-copy borrow。
+
+---
+
 ## 待補
 
 - Stage 1、3、4 開場小考：transcript 被 compact，問答原文遺失
