@@ -32,17 +32,20 @@
 
 **目標**：Python 原型 → C++ 移植，覆蓋 Stage 2~9 全觀念，建立面試敘事。
 
-**狀態**：進行中（10-1 ~ 10-4 完成）
+**狀態**：✅ 完成（10-1 ~ 10-6）
 
 ### 完成
 - 10-1：Python 單執行緒原型（Camera / Frame / InferenceEngine / Detection）
 - 10-2：Python 加 producer-consumer threading（queue.Queue）
 - 10-3：C++ `DmaBuffer`——RAII + Rule of Five + lifecycle log
 - 10-4：C++ `Frame`——Rule of Zero 包住 DmaBuffer，move-only
+- 10-5：`InferenceEngine::run(std::span<float>)`——zero-copy borrow
+- 10-6：`FrameQueue` + 整合 producer-consumer，完整 pipeline 兩 thread 跑通
 
-### 待完成
-- 10-5：`InferenceEngine::run(std::span<float>)`——span 借用語意
-- 10-6：`FrameQueue` + 整合 producer-consumer（完整 pipeline）
+### 面試敘事（已驗收）
+- `unique_ptr` 管 buffer → RAII，不 leak，不用手寫 destructor
+- `unique_lock` vs `lock_guard` → cv.wait 需要暫時 unlock
+- `span` vs `vector&` → zero-copy borrow，接受任何連續記憶體（待加強）
 
 ### 檔案
 - `stage3_integration/phase10_mini_pipeline/prototype.py`

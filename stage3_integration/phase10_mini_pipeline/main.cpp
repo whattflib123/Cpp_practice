@@ -3,6 +3,11 @@
 #include <span>
 #include <vector>
 
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <optional>
+#include <queue>
 
 
 struct Detection {
@@ -54,26 +59,49 @@ public:
 
 
 class Frame {
-    DmaBuffer buf;
-    int id;                        
+    std::unique_ptr<char[]> buf;
+    int id, size;
 public:
-    Frame(int id, size_t size)
-        : buf(size), id(id) {
-        // 印 "[Frame N] created"
-        std::cout << "[Frame " << id << "] created\n";
-    }
-
-    // copy 禁止（DmaBuffer 已 delete copy，Frame 自動繼承）
-    // copy 建構子 不用寫，自動繼承
-    // Frame(const Frame&) = delete;
-    // Frame& operator=(const Frame&) = delete;
-
-    // move：compiler 自動產生即可（為什麼？）
-    // destructor：compiler 自動產生即可（為什麼？）
-
+    Frame(int id, int size)
+        : buf(std::make_unique<char[]>(size)), id(id), size(size) {}
     int get_id() const { return id; }
-    DmaBuffer& buffer() { return buf; }
+
+    char* data() const { return buf.get(); }
+    int bytes() const { return size; }
+
 };
+
+class FrameQueue {
+    std::queue<Frame> frames;
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool done = false;
+public:
+    void push(Frame&& f) { 
+        {
+            std::lock_guard<std::mutex> g(mtx);
+            frames.push(std::move(f));
+        }     
+        cv.notify_one(); 
+    }
+    std::optional<Frame> pop() { 
+        std::unique_lock<std::mutex> lk(mtx);
+        cv.wait(lk, [this] { return !frames.empty() || done; });
+        if (frames.empty() && done) return std::nullopt;
+        Frame f = std::move(frames.front());
+        frames.pop();
+        return f;   
+    }
+    void set_done() { 
+        {
+            std::lock_guard<std::mutex> g(mtx);
+            done = true;
+        }
+        cv.notify_all();
+    }
+};
+
+
 
 class InferenceEngine {
 public:
@@ -88,16 +116,30 @@ public:
 
 
 int main() {
-    
-    Frame a(0, 1228800);
+    FrameQueue q;
     InferenceEngine engine;
 
-    // DmaBuffer 的 void* 轉成 float*，傳給 span
-    auto results = engine.run(std::span<float>(
-        reinterpret_cast<float*>(a.buffer().data()),
-        a.buffer().bytes() / sizeof(float)
-    ));
+    std::thread producer([&] {
+        for (int i = 0; i < 5; i++) {
+            q.push(Frame(i, 1228800));
+            std::cout << "pushed frame " << i << '\n';
+        }
+        q.set_done();
+    });
 
-    std::cout << "detections: " << results.size() << '\n';
+    std::thread consumer([&] {
+        while (true) {
+            auto f = q.pop();
+            if (!f) break;
+            auto results = engine.run(std::span<float>(
+                reinterpret_cast<float*>(f->data()),
+                f->bytes() / sizeof(float)
+            ));
+            std::cout << "frame " << f->get_id()
+                    << ": " << results.size() << " detections\n";
+        }
+    });
 
+    producer.join();
+    consumer.join();
 }
