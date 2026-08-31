@@ -351,6 +351,35 @@ void* ptr = malloc(sizeof(64));
 
 ---
 
+## Stage 10 驗收（2026-08-31）
+
+---
+
+**Q1：`Frame` 為什麼用 `unique_ptr` 管 buffer？**
+
+**你的答案**：就不用手動管理物件資源
+
+✅ 正確。完整說法：`unique_ptr` dtor 自動 `delete[]`，離開 scope 保證釋放（RAII），不會 leak，也不用手寫 destructor。
+
+---
+
+**Q2：`FrameQueue::pop()` 為什麼用 `unique_lock` 不用 `lock_guard`？**
+
+**你的答案**：因為會需要透過條件等改變鎖的狀態
+
+✅ 正確。`cv.wait()` 內部需要暫時 unlock（讓 producer 能進臨界區 push），再重新 lock。`lock_guard` 無法手動操作鎖狀態，`unique_lock` 可以。
+
+---
+
+**Q3：`InferenceEngine::run()` 為什麼收 `span<float>` 不收 `vector<float>&`？**
+
+**你的答案**：因為要直接去用到資料本身嗎
+
+❌ 太模糊。
+正確答案：**zero-copy borrow**。`span` 只是 `(ptr, size)`，不複製資料。如果收 `vector<float>&`，呼叫方必須把 `unique_ptr<char[]>` 的資料 copy 進一個 vector——多一次 malloc + memcpy，在 perception pipeline 是效能殺手。另外 `span` 接受任何連續記憶體（裸指標、array、vector），`vector&` 只能接 vector。
+
+---
+
 ## 待補
 
 - Stage 1、3、4 開場小考：transcript 被 compact，問答原文遺失
