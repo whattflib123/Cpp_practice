@@ -110,6 +110,31 @@ public:
 
 
 
+// final 關鍵字
+class Base2 final {
+public:
+    virtual void run() {}
+};
+
+class Derived2 : public Base2 {};   // 試著繼承 final class
+
+// Step 2 — method final
+
+class A {
+public:
+    virtual void run() {}
+};
+
+class B : public A {
+public:
+    void run() final {}   // 不准再被覆寫
+};
+
+class C : public B {
+public:
+    void run() override {}   // 試著覆寫
+};
+
 
 int main(){
 
@@ -179,6 +204,20 @@ int main(){
     backend = std::make_unique<CpuBackend2>();
 
     backend->run(buf);
+
+
+    // -----------------------------------
+    // Slicing Problem
+    // -----------------------------------
+    Dog dog;
+    Animal a = dog;   // by value，copy 進 Animal
+    a.speak();        // 誰被呼叫？
+
+    Animal& r = dog;   // 沒切片，r.speak() → Dog::speak
+    r.speak();
+
+    Animal* q = &dog;
+    q -> speak();
 
     
 }
