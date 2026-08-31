@@ -10,6 +10,61 @@
 
 ---
 
+## Stage 9-5 前複習（2026-08-25）
+
+---
+
+**Q1：`cv.wait` 的 predicate lambda 在防什麼？拿掉會怎樣？**
+
+**你的答案**（第一次）：都不會
+**你的答案**（第二次）：是在防止 Frame 裡面是空的，拿到錯誤的資料
+
+❌ 漏掉關鍵詞。
+防的是 **spurious wakeup**：OS 偶爾無緣無故喚醒 `wait`（沒人 `notify`）。沒有 predicate，醒來就繼續跑，frames 還是空 → pop 空 vector → crash。predicate 等價於 `while (!pred()) cv.wait(lk)`，spurious wakeup 後重新檢查，不滿足就繼續睡。
+
+---
+
+**Q2：`set_done()` 為什麼要放在 producer thread 裡最後呼叫，不能放在 main thread？**
+
+**你的答案**（第一次）：都不會
+**你的答案**（第二次）：因為會喚醒所有 consumer 嗎
+
+❌ 和 `notify_all()` 混淆了。
+正確原因：main thread 和 producer thread 同時跑。從 main thread 呼叫 `set_done()` 可能在 producer push 任何 frame 之前就執行——consumer 看到 `done=true && empty=true` 立刻退出，0 個 frame 被處理。放進 producer lambda 最後一行，保證 5 個全 push 完才設。
+
+---
+
+**Q3：這個 queue 的效能瓶頸在哪？**
+
+**你的答案**（第一次）：都不會
+**你的答案**（第二次）：要等到所有 producer 都做完才會進到 consumer
+
+❌ 搞混了單執行緒和多執行緒。producer 和 consumer 是同時跑的（兩個 thread），不是序列。
+真正的瓶頸：**單一 mutex 鎖住整個 vector**，push 和 pop 不能同時進行。改善方向：lock-free queue 或 double-buffer（一個給 push、一個給 pop，交換時才鎖）。
+
+---
+
+## Stage 10-3 前複習（2026-08-28）
+
+---
+
+**Q1：Rule of Five 五個是哪五個？**
+
+**你的答案**：dtor、copy ctor、copy assignment、move ctor、move assignment
+
+✅ 正確。
+
+---
+
+**Q2：`DmaBuffer` 為什麼要 `= delete` copy constructor？**
+
+**你的答案**：為了確保 runner 會使用 move 而不是 copy
+
+⚠️ 部分對，但根本原因沒說到。
+根本原因：**防止 double free**。若允許 copy，兩個物件的 `ptr` 指向同一塊記憶體，各自 destructor 都呼叫 `free()` → double free → crash。「逼呼叫方用 move」只是副作用，不是原因。
+
+---
+
 ## Stage 9 開場（2026-08-21）
 
 考 Stage 4、5、8 舊觀念。
