@@ -435,6 +435,39 @@ void* ptr = malloc(sizeof(64));
 
 ---
 
+## Stage 12（多型）開場複習（2026-08-31）
+
+---
+
+**Q1：`cv.wait()` 為什麼不能搭配 `lock_guard`，要用 `unique_lock`？**
+
+**你的答案**：因為只有 lock_guard 可以受到條件解鎖
+
+❌ 搞反了。是 `unique_lock` 才能條件解鎖，不是 `lock_guard`。
+`cv.wait()` 內部：解鎖 → 睡眠 → 被喚醒 → 重新上鎖。需要 `unlock()` method。
+`lock_guard` 沒有 `unlock()`，只有 dtor 才解鎖，所以 `cv.wait()` 無法接受它。
+
+---
+
+**Q2：move ctor 裡為什麼一定要寫 `other.buf = nullptr`？不寫會發生什麼？**
+
+**你的答案**：不然可能會出現兩個指標指向同一個位址，會發生 double free
+
+✅ 正確。move 後兩個物件都有 dtor，不清 null → 兩個 dtor 都 `delete` 同一塊 heap → double free。
+
+---
+
+**Q3：`span<const float> data` vs `const span<float> data`，各自能做什麼、不能做什麼？**
+
+**你的答案**：A 不能改 data，B 不能改 span 的指向
+
+⚠️ 答對了限制，沒答另一半。
+- A（`span<const float>`）：不能改元素，**可以** reseat span 本身。類比 `const float*`。
+- B（`const span<float>`）：不能 reseat，**可以** 改元素（`data[0] = 1.0f` 合法）。類比 `float* const`。
+實務上 A 更常用：借用 buffer 只讀時用 `span<const T>`。
+
+---
+
 ## 待補
 
 - Stage 1、3、4 開場小考：transcript 被 compact，問答原文遺失
