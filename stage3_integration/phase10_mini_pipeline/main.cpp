@@ -1,5 +1,14 @@
 #include <iostream>
 #include <cstdlib>   // malloc, free
+#include <span>
+#include <vector>
+
+
+
+struct Detection {
+    float x1, y1, x2, y2, confidence;
+};
+
 
 class DmaBuffer {
     void* ptr;
@@ -66,13 +75,29 @@ public:
     DmaBuffer& buffer() { return buf; }
 };
 
+class InferenceEngine {
+public:
+    // 借用 frame 的 pixel data，不複製
+    std::vector<Detection> run(std::span<float> pixels) {
+        std::cout << "[Inference] processing " << pixels.size() << " floats\n";
+        // 回傳 2 個假 Detection
+        return { {0.1f,0.2f,0.5f,0.8f,0.9f}, {0.3f,0.1f,0.7f,0.6f,0.75f} };
+    }
+};
 
 
 
 int main() {
-    // TODO: 建一個 DmaBuffer(1228800)，move 給另一個，觀察 log 順序
+    
     Frame a(0, 1228800);
-    Frame b = std::move(a);
-    std::cout << "b id=" << b.get_id() << '\n';
+    InferenceEngine engine;
 
-    }
+    // DmaBuffer 的 void* 轉成 float*，傳給 span
+    auto results = engine.run(std::span<float>(
+        reinterpret_cast<float*>(a.buffer().data()),
+        a.buffer().bytes() / sizeof(float)
+    ));
+
+    std::cout << "detections: " << results.size() << '\n';
+
+}
