@@ -468,6 +468,37 @@ void* ptr = malloc(sizeof(64));
 
 ---
 
+## Stage 13（Template）開場複習（2026-09-01）
+
+---
+
+**Q1：`unique_ptr` 為什麼不能 copy，只能 move？**
+
+**你的答案**：因為 unique_ptr 要確保一個物件只能由一個指標管理，避免 double free
+
+✅ 正確。unique ownership → copy 會產生兩個 owner → 兩個 dtor → double free，所以 copy 被 `= delete`，只能 move 轉移所有權。
+
+---
+
+**Q2：`span<const float>` 和 `const span<float>` 差在哪？**
+
+**你的答案**：前者可以改 span 的指向，不能改指向的值；後者可以改值但不可以改指向
+
+✅ 正確。`span<const float>` = 元素唯讀，span 本身可 reseat；`const span<float>` = 元素可寫，span 不可 reseat。類比 `const float*` vs `float* const`。
+
+---
+
+**Q3：base class 有 `virtual` function，dtor 一定要加什麼？為什麼？**
+
+**你的答案**：= default，要確保每個建立起來的物件都會被解構
+
+⚠️ 語法沒錯但關鍵字答錯，原因也不完整。
+正確答案：dtor 要加 **`virtual`**（`virtual ~Base() = default;`）。
+原因：`delete base_ptr` 時，沒有 `virtual` → 靜態型別決定呼叫哪個 dtor → derived dtor 沒跑 → leak / UB。
+`= default` 只是「用編譯器產生的實作」，不加 `virtual` 一樣會出問題。
+
+---
+
 ## 待補
 
 - Stage 1、3、4 開場小考：transcript 被 compact，問答原文遺失
