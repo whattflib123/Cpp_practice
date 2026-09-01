@@ -499,6 +499,55 @@ void* ptr = malloc(sizeof(64));
 
 ---
 
+## Stage 13（Template）練習中問答（2026-09-01）
+
+---
+
+**Q：三次呼叫都沒有寫 `my_max<int>(...)`，編譯器怎麼知道 `T` 是什麼？**
+
+**你的答案**：透過 template 編譯器會將輸入的型別一同傳入 function
+
+⚠️ 方向對，說法不精確。
+正確說法：**template argument deduction**——編譯器看引數型別自動推導 `T`。`my_max(3, 5)` 兩個引數都是 `int` → `T = int`。陷阱：`my_max(3, 1.5)` 一個 `int` 一個 `double`，`T` 衝突 → 編譯期報錯，不自動轉型。
+
+---
+
+**Q：`const` 和 `&` 在 template 推導後還在嗎？這和 `auto` 有什麼關係？**
+
+**你的答案**：不知道
+
+❌ 未答。
+正確答案：`const` 和 `&` 都丟掉，推導結果都是 `int`。`auto` 推導規則和 template 完全相同——都丟掉 reference 和 top-level const。要保留要手寫：`const T&` / `auto&`。
+
+---
+
+**Q：`foo(int&&)` 和 `bar(T&&)` 都寫 `&&`，為什麼 `bar(a)` 可以接 lvalue，`foo(a)` 不行？**
+
+**你的答案**：因為有用 typename，foo(a) 無法連結到 lvalue
+
+⚠️ 方向對，說法不精確。
+正確說法：`foo(int&& x)`：`int` 固定，`&&` 是 rvalue reference，只接 rvalue。`bar(T&& x)`：`T` 是 template 參數，`T&&` 是 **forwarding reference**，推導規則特殊——傳 lvalue `a` 時 `T` 推導成 `int&`，`int& &&` 折疊成 `int&`（reference collapsing）。
+
+---
+
+**Q：`wrapper_bad(42)` 印出的是 lvalue 還是 rvalue？為什麼？**
+
+**你的答案**：印出的是 lvalue，因為沒有把型別傳進去
+
+⚠️ 結果答對，原因不精確。
+正確原因：有名字的變數就是 lvalue。`x` 進了函式就有名字，不管外面傳的是 rvalue `42`，函式體內 `x` 是 lvalue。`std::forward` 的工作是根據 `T` 推導結果把原本的值類別還原。
+
+---
+
+**Q：`make_obj` 裡的 `Args&&...` 是什麼？`std::forward<Args>(args)...` 在做什麼？**
+
+**你的答案**：都不知道
+
+❌ 未答。
+正確答案：`Args&&...` 是 **variadic template**，`...` 表示零個或多個型別參數，`Args` 是參數包。`std::forward<Args>(args)...` 展開參數包，同時把每個參數的值類別還原，等同 `forward<int>(1), forward<const char*>("cam0")`。這是 `std::make_unique` 內部的實作原理。
+
+---
+
 ## 待補
 
 - Stage 1、3、4 開場小考：transcript 被 compact，問答原文遺失
