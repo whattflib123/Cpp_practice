@@ -10,14 +10,13 @@ Felix 的 C++ 練習簿。目標**不只是**把 C++ 練到能撐起 SRAM 的 AM
 
 ## 使用者現況
 
-- **Stage 0~8 已完成。** 語法直覺(pointer、Rule of Five、RAII、span、vector
-  capacity/size)已經打穩,不是「認得」而是「手指打得出來」。
-- **現階段風險不是語法不熟,是停留在孤立練習題裡。** 已知的 Stage 0~8 觀念
-  必須搬進真實專案(EdgeInferencePool / FactoryPerception)才算兌現,面試答的
-  是「這段程式碼在解決什麼實際問題」,不是練習題的假設情境。
-- 進入 **Stage 9~11 整合期**:多執行緒延伸、EdgeInferencePool 真代碼整合、
-  ROS2 所有權模型接軌。方法論(問題驅動、微題階梯、對比組印結果)不變,
-  只是主角從獨立練習題換成真實專案程式碼。
+- **Stage 0~13 已完成。** 語法直覺(pointer、Rule of Five、RAII、span、vector、
+  多執行緒、多型、template)已經打穩,不是「認得」而是「手指打得出來」。
+- **現階段風險不是語法不熟,是停留在孤立練習題裡。** 已知觀念必須搬進真實專案
+  (EdgeInferencePool / FactoryPerception)才算兌現。
+- **當前目標：M1 DpuBackend**——把 VART API 接進 `InferenceBackend` 架構，
+  KV260 + Vitis-AI 環境已設置完成，`InferenceBackend` 介面已存在。
+- Stage 11（ROS2 所有權模型）在 M3 機械手臂模擬 pipeline 開始前補。
 
 ### 學習特性(他自述,務必配合)
 
@@ -94,16 +93,17 @@ Felix 的 C++ 練習簿。目標**不只是**把 C++ 練到能撐起 SRAM 的 AM
   `-g` 必帶,否則 ASan 報告沒有行號。
 - **Stage 9 多執行緒練習額外需要**:`-fsanitize=thread`(TSan)。TSan 和 ASan
   不能同時開,分開兩次編譯測試。
-- **Stage 10 整合期**:EdgeInferencePool 正式 repo 路徑待補(換機器接手流程時
-  一併記錄)。
+- **M1 DpuBackend**：KV260 + Vitis-AI（PetaLinux/VART runtime）已設置完成。
+  EdgeInferencePool 正式 repo 路徑待補（換機器接手流程時一併記錄）。
 
 ## 目錄結構
 
 - `notes/` —— 八章 C++ 語法筆記(第一~八章)
 - `stage1_basic/phase_1~7/` —— **舊的**語法章節練習,對應 notes 各章。已完成。
-- `stage2_small_code/phase0 ~ phase8/` —— **Stage 0~8,已完成**的就業取向獨立
-  練習。目錄名沿用 `phase` 前綴,編號對應大綱 Stage 0~8。
-  和 `stage1_basic/phase_*`(底線)是兩套不同體系,不要混用。
+- `stage2_small_code/phase0 ~ phase8/` —— **Stage 0~8,已完成**的就業取向獨立練習。
+- `stage2_small_code/phase_polymorphism/` —— **Stage 12,已完成**：多型/virtual/vtable。
+- `stage2_small_code/phase_template/` —— **Stage 13,已完成**：template/forwarding ref/std::forward。
+  目錄名沿用 `phase` 前綴。和 `stage1_basic/phase_*`(底線)是兩套不同體系,不要混用。
 - `stage3_integration/phase9_concurrency, phase10_edgepool, phase11_ros2/` ——
   **現在進行中**的 Stage 9~11 整合期練習。phase9 仍是獨立小檔(多執行緒觀念
   驗證);phase10、phase11 是「先在這裡驗證觀念,再貼進正式 repo」的中繼站,
@@ -142,9 +142,11 @@ repo 內並 commit:
 | 6 | `std::span` 借用語意 | TensorRT output buffer 後處理 | span vs vector vs raw pointer+length、lifetime 風險 | ✅ 完成 |
 | 7 | `std::vector` capacity vs size | detection queue 效能 | amortized O(1) push_back 原理、iterator invalidation | ✅ 完成 |
 | 8 | 整合:mini frame queue(單執行緒) | capture → inference 資料流縮小版 | 延伸成多執行緒會遇到什麼問題(預告,不用解) | ✅ 完成 |
-| 9 | 多執行緒 producer-consumer frame queue | Stage 8 的預告兌現:`ThreadPool` 派工 + TSan 抓 race | mutex vs lock-free 取捨、TSan 抓到的實際 race 案例怎麼修 | 進行中 |
-| 10 | Stage 2~7 觀念搬進 EdgeInferencePool 正式 repo | `DpuBuffer`(RAII+Rule of Five)、`InferenceBackend`(span 借用語意) 真實實作 | 「這段程式碼在解決什麼實際問題」、真實 buffer 生命週期設計取捨 | 待開始 |
-| 11 | ROS2 sensor callback 所有權模型 | FactoryPerception:camera/LiDAR frame 的 move/span 設計、多 subscriber 所有權 | DMA buffer lifetime、多 subscriber 之間誰擁有資料 | 待開始 |
+| 9 | 多執行緒 producer-consumer frame queue | Stage 8 的預告兌現:`ThreadPool` 派工 + TSan 抓 race | mutex vs lock-free 取捨、TSan 抓到的實際 race 案例怎麼修 | ✅ 完成 |
+| 10 | Mini Perception Pipeline（替代原 EdgeInferencePool 整合）| DmaBuffer+Frame+InferenceEngine+FrameQueue 完整 pipeline | 面試敘事：RAII/move/span/cv 全觀念串接 | ✅ 完成 |
+| 11 | ROS2 sensor callback 所有權模型 | FactoryPerception:camera/LiDAR frame 的 move/span 設計、多 subscriber 所有權 | DMA buffer lifetime、多 subscriber 之間誰擁有資料 | 待開始（M3 前補）|
+| 12 | 多型 / virtual / vtable | `InferenceBackend` 抽象介面設計基礎 | vtable 機制、virtual dtor、override/final、slicing | ✅ 完成 |
+| 13 | Template 基礎 | forwarding ref、std::forward、variadic template（make_unique 原理）| T&& vs Type&&、reference collapsing、perfect forwarding | ✅ 完成 |
 
 **Stage 3-4 是整個計畫的核心。** 這兩關直覺打穩,後面都是疊在上面的語法糖。
 面試最常被問倒的也是這兩關(「你能解釋你的 class 裡發生了幾次拷貝嗎」是典型考法)。
@@ -153,11 +155,17 @@ repo 內並 commit:
 單獨練習題答得出來只是及格線,能指著 EdgeInferencePool / FactoryPerception 的
 真實程式碼講清楚同一套觀念,才是這個 repo 最終要交付的東西。
 
-## Stage 11 之後的延伸考點(先列著,完成後他若問「接下來呢」從這挑)
+## 下一步（當前優先順序）
 
-- `const` correctness(含 `const` method、`mutable`)
-- 多型 / virtual function / vtable 運作原理
-- Template 基礎與型別推導(尤其 `auto`、完美轉發 `T&&` + `std::forward`)
-- Exception safety 等級(basic / strong / no-throw guarantee)
-- `std::atomic` 與 lock-free 基礎(Stage 9 多執行緒的進階延伸)
-- UB 常見案例(dangling reference、use-after-free、strict aliasing)
+1. **M1 DpuBackend**：把 VART API 接進 `InferenceBackend`（EdgeInferencePool 正式 repo）
+2. **Stage 11**：ROS2 所有權模型（M3 機械手臂模擬 pipeline 開始前補）
+3. **M2**：最小物件偵測模型（MobileNetV2 + Vitis-AI 量化）
+4. **M3**：機械手臂模擬 pipeline（UR5e + MoveIt2 + Gazebo）
+
+## 延伸考點（尚未練過，面試補強用）
+
+- `const` correctness（含 `const` method、`mutable`）
+- Exception safety 等級（basic / strong / no-throw guarantee）
+- `std::atomic` 與 lock-free 基礎（Stage 9 多執行緒的進階延伸）
+- UB 常見案例（dangling reference、use-after-free、strict aliasing）
+- SFINAE / template specialization / `if constexpr`
