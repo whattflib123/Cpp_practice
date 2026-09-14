@@ -548,6 +548,43 @@ void* ptr = malloc(sizeof(64));
 
 ---
 
+## M1 DpuBackend 前複習（2026-09-14）
+
+---
+
+**Q1：`unique_ptr<float[]>` vs 裸指標 `float*`，面試官問「為什麼用 unique_ptr 不用 new[]」你怎麼回答？**
+
+**你的答案**：因為這樣就不用手動管理記憶體了
+
+⚠️ 方向對，太模糊。
+正確說法：`unique_ptr` dtor 自動 `delete[]`，任何 scope 出口（正常 return、throw）都保證執行——這是 RAII。不需手寫 destructor、不需手寫 Rule of Five、不會 leak、不會 double-free，也不可能 copy（Rule of Zero）。「不用手動管理」是結果，不是原因，面試官會繼續追問。
+
+---
+
+**Q2：`std::span<float>` 和 `const std::vector<float>&` 都能傳連續資料，InferenceEngine::run() 為什麼選 span？**
+
+**你的答案**：忘記了
+
+❌ 遺忘，此概念在 Stage 10 反覆考過仍忘記。
+正確答案：
+1. **non-owning**：`span` 只是 `(ptr, size)`，不複製不 malloc，zero-copy borrow。
+2. **接受任何連續記憶體**：raw array、vector、裸指標+長度都行；`const vector&` 只接 vector。
+DmaBuffer 是裸 `void*`，傳 `vector&` 要多一次 malloc + memcpy；傳 `span` 直接借用，效能關鍵。
+
+---
+
+**Q3：`lock_guard<mutex>` vs `unique_lock<mutex>`，`cv.wait()` 為什麼一定要配 `unique_lock`？**
+
+**你的答案**：因為 lock_guard 不支援條件改變狀態
+
+⚠️ 說出限制，沒說到機制。
+`cv.wait()` 內部流程：**解鎖 → 睡眠 → 被喚醒 → 重新上鎖**。
+它需要在睡眠期間呼叫 `unlock()`（讓 producer 能進臨界區 push），喚醒後再 `lock()`。
+`lock_guard` 沒有 `unlock()` method，只有 dtor 才解鎖；`unique_lock` 有 `unlock()/lock()`，`cv.wait()` 才能操作它。
+面試標準答法：「`cv.wait()` 需要能暫時 unlock，`lock_guard` 辦不到。」
+
+---
+
 ## 待補
 
 - Stage 1、3、4 開場小考：transcript 被 compact，問答原文遺失
